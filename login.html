@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Login - Voting Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<style>
+body {
+  margin:0; padding:0; min-height:100vh; font-family:'Poppins',sans-serif;
+  background: linear-gradient(120deg,#e5f1ff,#f0fff4 68%);
+  color:#232a40;
+}
+header {
+  background: #2d70e7;
+  color: #fff;
+  padding: 32px 0 12px 0;
+  text-align: center;
+  box-shadow: 0 6px 32px rgba(44,95,194,0.13);
+}
+header h1 { font-size: 2.3rem; font-weight: 700; margin: 0 0 5px 0; letter-spacing:.03em;}
+header p { font-size:1.06rem;opacity:.93;margin:2px 0;}
+.login-main {
+  max-width: 450px; margin: 46px auto 0 auto;
+  background: rgba(255,255,255,0.93); border-radius: 17px;
+  box-shadow: 0 5px 39px rgba(44,95,194,0.13);
+  padding: 36px 30px 36px 30px;
+}
+.tab-header {display:flex; justify-content:center; gap:30px; margin-bottom:28px;}
+.tab-btn {
+  background:none; border:none; border-bottom:3px solid transparent;
+  color:#247ca4; font-size:1.08rem; font-family:inherit;
+  font-weight:700; padding:5px 18px; cursor:pointer; transition: border 0.18s, color 0.16s;
+}
+.tab-btn.active { color:#001b68; border-bottom:3px solid #2e45bc; }
+.login-tab { display:none; }
+.login-tab.active { display:block; }
+input[type="text"], input[type="password"] {
+  padding:10px 17px; border-radius:8px; font-size:1em; border:1px solid #afd7ef;
+  background: #f6faff; font-family: inherit; margin-bottom:18px; width:94%;
+}
+button[type="submit"] {
+  background:#2d70e7; color:#fff; font-weight:600; border:none;
+  border-radius:18px; padding:11px 41px; font-size:1.08rem;
+  margin-top:10px; cursor:pointer; transition:background 0.22s;
+}
+button[type="submit"]:hover { background:#1855c2; }
+.login-error { color:#e14b4b; font-weight:700; margin-top:15px;}
+footer {margin:38px auto 0 auto; text-align:center; color:#273c6c;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Election Portal Login</h1>
+  <p>Access secure election analytics and management</p>
+</header>
+<div class="login-main">
+  <div class="tab-header">
+    <button type="button" class="tab-btn" id="btn-admin">Admin Login</button>
+    <button type="button" class="tab-btn" id="btn-voter">Voter Login</button>
+  </div>
+  <div class="login-tab" id="tab-admin">
+    <form id="adminLoginForm" autocomplete="off">
+      <input type="text" name="username" placeholder="Admin Username" required><br>
+      <input type="password" name="password" placeholder="Password" required><br>
+      <button type="submit">Login as Admin</button>
+      <div id="adminLoginError" class="login-error"></div>
+    </form>
+  </div>
+  <div class="login-tab" id="tab-voter">
+    <form id="voterLoginForm" autocomplete="off">
+      <input type="text" name="voterid" placeholder="Voter ID" required><br>
+      <button type="submit">Login as Voter</button>
+      <div id="voterLoginError" class="login-error"></div>
+    </form>
+  </div>
+</div>
+<footer>
+  &copy; 2025 Election Commission - All rights reserved
+</footer>
+<script>
+function activate(tab) {
+  document.getElementById("tab-admin").classList.toggle("active", tab === "admin");
+  document.getElementById("tab-voter").classList.toggle("active", tab === "voter");
+  document.getElementById("btn-admin").classList.toggle("active", tab === "admin");
+  document.getElementById("btn-voter").classList.toggle("active", tab === "voter");
+  document.getElementById("adminLoginError").textContent = "";
+  document.getElementById("voterLoginError").textContent = "";
+}
+document.getElementById("btn-admin").onclick = function(){activate("admin");};
+document.getElementById("btn-voter").onclick = function(){activate("voter");};
+activate("admin");
+
+document.getElementById("adminLoginForm").onsubmit = function(e) {
+  e.preventDefault();
+  const uname = this.username.value.trim();
+  const pw = this.password.value.trim();
+  if(uname === "admin" && pw === "admin") {
+    sessionStorage.setItem('userRole', 'admin');
+    window.location.href = "dashboard.html";
+  } else {
+    document.getElementById("adminLoginError").textContent = "Invalid admin credentials!";
+  }
+};
+document.getElementById("voterLoginForm").onsubmit = function(e) {
+  e.preventDefault();
+  const voterID = this.voterid.value.trim();
+  if(!voterID) {
+    document.getElementById("voterLoginError").textContent = "Please enter your Voter ID.";
+    return;
+  }
+  sessionStorage.setItem('userRole', 'voter');
+  sessionStorage.setItem('voterID', voterID);
+  window.location.href = "voter_dashboard.html";
+};
+</script>
+</body>
+</html>

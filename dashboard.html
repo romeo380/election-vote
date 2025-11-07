@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Election Analytics Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body { margin:0; padding:0; font-family:'Poppins',sans-serif; background: linear-gradient(120deg,#e5f1ff,#f0fff4 68%); color:#232a40;}
+    header { background:#2d70e7; color:#fff; padding:36px 0 22px 0; text-align:center; box-shadow:0 6px 32px rgba(44,95,194,0.13);}
+    header h1{ font-size:2.3rem;font-weight:700;margin:0 0 7px 0; letter-spacing:.03em;}
+    header p{ font-size:1.18rem;opacity:.93;margin:4px 0;}
+    nav { background:#f2f7fd; border-bottom: 1.5px solid #cce0ff; display:flex; justify-content:center; gap:28px; padding:14px 0; align-items:center;}
+    nav a { color:#2363b1; font-weight:600; text-decoration:none; font-size:1.07rem; padding:7px 14px; border-radius:6px; transition: background .16s;}
+    nav a:hover, nav a.active { background:#dde9ff; color:#204a87;}
+    .logout-btn {
+      margin-left: 24px; padding: 7px 16px; font-size: 1.03rem;
+      background: #e14b4b; color: #fff; font-weight: 600; border-radius: 7px;
+      border: none; cursor: pointer; transition: background .16s; box-shadow: 0 2px 8px rgba(225,75,75,0.09);
+    }
+    .logout-btn:hover { background: #c23030;}
+    main {
+      max-width: 1100px; margin: 35px auto 30px auto; background: rgba(255,255,255,0.93); border-radius: 17px;
+      box-shadow: 0 5px 39px rgba(44,95,194,0.11); padding: 42px 28px 32px 28px; display:flex; flex-direction:column; gap:39px;
+    }
+    .dashboard-section {margin-bottom: 16px;}
+    .overview-cards {
+      display: flex; gap: 29px; margin-bottom: 8px; flex-wrap: wrap;
+    }
+    .card {
+      flex: 1; min-width: 220px;
+      background: linear-gradient(97deg,#4a90e2 45%,#cddaf3 100%);
+      color: #fff; border-radius: 13px; padding: 24px 22px 17px 22px;
+      box-shadow: 0 5px 22px rgba(44,95,194,0.10); font-size: 1.15rem;
+      font-weight: 600; display: flex; flex-direction: column; gap: 6px;
+    }
+    .card .big {font-size:2.4rem;font-weight:900;margin-top:2px;}
+    .charts-area {display: flex; flex-wrap: wrap; gap: 38px;}
+    .chart-box {flex: 1 1 320px; min-width: 270px; background: #f7fafb; border-radius: 13px; padding: 22px 18px 18px 18px; box-shadow: 0 2px 18px rgba(44,95,194,0.10); margin-bottom: 8px; display: flex; flex-direction: column; gap:14px; align-items: center;}
+    .chart-title {font-size:1.18rem;font-weight:700;color:#2d70e7;margin-bottom:12px;}
+    .bar-chart {width:100%;display:flex;align-items:flex-end;height:160px;gap:18px;}
+    .bar-group {display:flex;flex-direction:column;align-items:center;gap:7px;}
+    .bar {width: 24px; border-radius: 7px 7px 0 0; background: linear-gradient(147deg,#76c6ea 45%,#2d70e7 90%); box-shadow: 0 4px 18px rgba(44,95,194,0.06); transition: height .19s;}
+    .bar-label {font-size:.97rem;margin-top:2px;color:#29498a;}
+    .pie-chart {width:140px;height:140px;border-radius:50%;background:#fff;position:relative;overflow:hidden; box-shadow: 0 2px 12px rgba(44,95,194,0.10);}
+    .pie-slice {position: absolute; width: 100%; height: 100%; clip-path: circle(70px at 70px 70px); border-radius: 50%; transform: rotate(var(--rotate)) skewY(var(--skew)); background: var(--color);}
+    .pie-labels {margin-top:14px;}
+    .pie-label {font-size: .98rem; font-weight:500; margin:3px 0; display: flex; align-items: center; gap:9px; color:#354a80;}
+    .pie-swatch {width:15px;height:15px;border-radius:4px;}
+    .poll-container {width:100%;height:170px;position:relative;}
+    .poll-line {position: absolute; left:0; top:0; width:100%; height:100%; pointer-events:none;}
+    .poll-points {display:flex;position:absolute;left:0;top:0;width:100%;height:100%;}
+    .poll-point {position: absolute; width:13px;height:13px;border-radius:50%;background:#2d70e7; border:3px solid #ffffffcc;box-shadow:0 1px 9px #69bdf5; left:var(--x); top:var(--y);}
+    .poll-labels {display:flex;justify-content:space-between;margin-top:8px;}
+    .poll-label {font-size:.97rem;color:#38559d;}
+    @media (max-width: 800px) {main{padding:14px;max-width:98vw;}.charts-area{flex-direction:column;gap:23px;}.overview-cards{flex-direction:column;}nav{flex-direction:column;gap:10px;}.logout-btn{margin-left:0;margin-top:7px;}}
+    footer {margin-top:40px;padding:18px 0;background:#e0ebf9;text-align:center;font-size:.99rem;color:#273c6c;border-radius:0 0 11px 11px;}
+    footer span {font-weight:700;color:#2455b8;}
+  </style>
+  <script>
+    // Role-based navigation logic: only show Admin Panel if 'admin' login
+    document.addEventListener("DOMContentLoaded", function(){
+      var user = sessionStorage.getItem('userRole');
+      var isAdmin = user === "admin";
+      document.getElementById("adminNav").classList.toggle("hide", !isAdmin);
+      document.getElementById("logoutBtn").classList.remove("hide");
+    });
+    function logout() {
+      sessionStorage.clear();
+      window.location.href = "login.html";
+    }
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Election Analytics Dashboard</h1>
+    <p>General Election - November 18, 2025</p>
+  </header>
+  <nav>
+    <a href="#overview" class="active">Overview</a>
+    <a href="#turnout">Voter Turnout</a>
+    <a href="#popularity">Candidate Polls</a>
+    <a href="#polls">Polling Results</a>
+    <a id="adminNav" href="admin_panel.html">Admin Panel</a>
+    <button id="logoutBtn" class="logout-btn hide" onclick="logout()">Logout</button>
+  </nav>
+  <main>
+    <!-- Overview Section -->
+    <section id="overview" class="dashboard-section">
+      <h2>Overview</h2>
+      <div class="overview-cards">
+        <div class="card">
+          Total Votes Cast
+          <span class="big">41,500</span>
+        </div>
+        <div class="card">
+          Registered Voters
+          <span class="big">50,000</span>
+        </div>
+        <div class="card">
+          Voter Turnout
+          <span class="big">83%</span>
+        </div>
+      </div>
+    </section>
+    <!-- Voter Turnout Section -->
+    <section id="turnout" class="dashboard-section">
+      <h2>Voter Turnout</h2>
+      <div class="chart-box">
+        <span class="chart-title">Turnout by Demographic</span>
+        <div class="bar-chart">
+          <div class="bar-group"><div class="bar" style="height:120px;"></div><div class="bar-label">18-25</div></div>
+          <div class="bar-group"><div class="bar" style="height:98px;"></div><div class="bar-label">26-40</div></div>
+          <div class="bar-group"><div class="bar" style="height:87px;"></div><div class="bar-label">41-60</div></div>
+          <div class="bar-group"><div class="bar" style="height:77px;"></div><div class="bar-label">60+</div></div>
+          <div class="bar-group"><div class="bar" style="height:69px;background:linear-gradient(147deg,#b9b4ea 45%,#7c7de7 90%)"></div><div class="bar-label">Other</div></div>
+        </div>
+      </div>
+    </section>
+    <!-- Candidate Popularity Section -->
+    <section id="popularity" class="dashboard-section">
+      <h2>Candidate Popularity</h2>
+      <div class="chart-box">
+        <span class="chart-title">Votes Distribution</span>
+        <div class="pie-chart">
+          <div class="pie-slice" style="--rotate:0deg;--skew:-106deg;--color:#3578ea;"></div>
+          <div class="pie-slice" style="--rotate:194deg;--skew:-61deg;--color:#67cada;"></div>
+          <div class="pie-slice" style="--rotate:295deg;--skew:-29deg;--color:#f7b158;"></div>
+        </div>
+        <div class="pie-labels">
+          <div class="pie-label"><span class="pie-swatch" style="background:#3578ea"></span>Jane Doe &mdash; 54%</div>
+          <div class="pie-label"><span class="pie-swatch" style="background:#67cada"></span>John Smith &mdash; 31%</div>
+          <div class="pie-label"><span class="pie-swatch" style="background:#f7b158"></span>Alex Green &mdash; 15%</div>
+        </div>
+      </div>
+    </section>
+    <!-- Polling Results Section -->
+    <section id="polls" class="dashboard-section">
+      <h2>Polling Results Over Time</h2>
+      <div class="chart-box">
+        <span class="chart-title">Public Opinion Trends</span>
+        <div class="poll-container">
+          <svg class="poll-line" viewBox="0 0 340 140"><polyline fill="none" stroke="#3578ea" stroke-width="4" points="0,85 60,62 120,54 180,64 240,82 300,105 340,120"/></svg>
+          <div class="poll-points">
+            <div class="poll-point" style="--x:0px;--y:85px;"></div>
+            <div class="poll-point" style="--x:60px;--y:62px;"></div>
+            <div class="poll-point" style="--x:120px;--y:54px;"></div>
+            <div class="poll-point" style="--x:180px;--y:64px;"></div>
+            <div class="poll-point" style="--x:240px;--y:82px;"></div>
+            <div class="poll-point" style="--x:300px;--y:105px;"></div>
+            <div class="poll-point" style="--x:340px;--y:120px;"></div>
+          </div>
+        </div>
+        <div class="poll-labels">
+          <div class="poll-label">Oct 1</div>
+          <div class="poll-label">Oct 8</div>
+          <div class="poll-label">Oct 15</div>
+          <div class="poll-label">Oct 22</div>
+          <div class="poll-label">Oct 29</div>
+          <div class="poll-label">Nov 5</div>
+          <div class="poll-label">Nov 12</div>
+        </div>
+        <div class="poll-labels" style="margin-top:-7px;">
+          <div class="poll-label">68%</div>
+          <div class="poll-label">72%</div>
+          <div class="poll-label">74%</div>
+          <div class="poll-label">71%</div>
+          <div class="poll-label">69%</div>
+          <div class="poll-label">66%</div>
+          <div class="poll-label">63%</div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <span>Disclaimer:</span> All election statistics are for demonstration purposes only and sourced from official election commission reports and public polling agencies. Please refer to the official resources for precise results.
+  </footer>
+</body>
+</html>

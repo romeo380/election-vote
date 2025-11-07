@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Panel - Voting Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {margin:0; padding:0; font-family:'Poppins',sans-serif; background: linear-gradient(120deg,#e5f1ff,#f0fff4 68%); color:#232a40;}
+    header { background:#2d70e7; color:#fff; padding:36px 0 22px 0; text-align:center; box-shadow:0 6px 32px rgba(44,95,194,0.13);}
+    nav.topnav { background:#f2f7fd; border-bottom:1.5px solid #cce0ff; display:flex; justify-content:center; gap:28px; padding:14px 0; align-items:center;}
+    nav.topnav a { color:#2363b1;font-weight:600; text-decoration:none; font-size:1.07rem; padding:7px 14px; border-radius:6px;transition:background .16s;}
+    nav.topnav a:hover, nav.topnav a.active { background:#dde9ff; color:#204a87;}
+    .logout-btn { margin-left: 24px; padding: 7px 16px; background: #e14b4b; color: #fff; font-weight: 600; border-radius: 7px; border: none; cursor: pointer;}
+    .container { display: flex; max-width:1200px; margin:38px auto 0 auto; background:rgba(255,255,255,0.93); border-radius:17px; box-shadow:0 5px 39px rgba(44,95,194,0.11); min-height:670px;}
+    .sidebar {
+      min-width:215px; width:220px; background: #f3fafd; border-radius:17px 0 0 17px; box-shadow:0 0 10px #79caff20;
+      display:flex; flex-direction:column; gap:6px; padding:31px 0 24px 0; position: relative; transition:width 0.22s; overflow-x: visible;
+    }
+    .sidebar.collapsed { min-width:55px; width:59px;}
+    .side-tab {
+      display: flex; align-items: center; gap:12px;
+      font-size:1.13rem; font-weight:600; color:#2363b1;
+      padding:11px 24px 12px 18px; text-align:left; border:none; background:none;
+      border-radius:6px 0 0 6px; margin:3px 0; cursor:pointer;
+      transition:background .16s, color .13s; border-left:2px solid transparent; white-space: nowrap;
+    }
+    .side-tab svg { width:22px; height:22px; flex-shrink:0;}
+    .side-tab .tab-label {transition:opacity .15s, margin .18s;}
+    .sidebar.collapsed .side-tab .tab-label {opacity:0; margin-left:-30px; pointer-events:none;}
+    .side-tab.active { color:#204a87; background:#d9f2ff; border-left:4px solid #2d70e7;}
+    .sidebar-toggle {
+      position: absolute; top:15px; right:-14px;
+      width: 28px; height:28px; border-radius:99px; border:2px solid #cce0ff; background:#fff;
+      display: flex; align-items: center; justify-content: center; cursor:pointer; box-shadow: 0 2px 8px #79caff20; z-index: 3; transition: right .2s;
+    }
+    .sidebar.collapsed .sidebar-toggle{right:-26px;}
+    .maincontent { flex:1; padding:40px 32px 28px 32px;}
+    .section { display:none; }
+    .section.active { display:block; }
+    .input-row {margin:13px 0;display:flex;gap:13px;flex-wrap:wrap;}
+    .input-row input, .input-row select { padding:10px 14px; border-radius:7px; font-size:1em; border:1px solid #afd7ef; background:#f6faff;}
+    .input-row button { font-size: 1em; padding:7px 19px; border-radius:7px; font-weight:600; border:none;}
+    .input-row .reset-btn { background: #e05252; color:#fff; margin-left:7px;}
+    .input-row .add-btn { background:#41b883; color:#fff; }
+    .input-row .edit-btn { background:#4a90e2; color:#fff;}
+    .input-row .delete-btn { background: #e14b4b; color: #fff; margin-left: 6px;}
+    .logo-preview {max-width:140px;max-height:80px;border:1.5px solid #6ec3f7; background:#fff; border-radius:13px; object-fit:contain;}
+    table { width: 100%; border-collapse: collapse; background:#fafaff; margin-bottom:25px;}
+    th, td { padding: 9px 10px; text-align: left; }
+    th { background: #e3f0fc; color: #2d70e7; }
+    tr:nth-child(even){ background: #f2f8fd;}
+    .actions button { margin-right:6px;}
+    .section-title { font-size:1.3rem; font-weight:700; color:#2d70e7; margin-bottom:19px;}
+    .info-box {background:linear-gradient(97deg,#4a90e2 30%,#cddaf3 100%);color:#fff;border-radius:13px;padding:21px 20px;margin-bottom:17px; font-size:1.12rem;}
+    #backupStatus {margin-top:10px;color:#265198;font-weight:600;}
+    @media (max-width:900px){
+      .container {flex-direction:column;}
+      .sidebar{width:100%;min-width:unset;border-radius:17px 17px 0 0;flex-direction:row;overflow-x:auto;}
+      .side-tab{padding:11px 8px;font-size:1.00rem;}
+      .maincontent{padding:13px;}
+    }
+    footer {margin-top:38px;padding:18px 0;background:#e0ebf9;text-align:center;font-size:.99rem;color:#273c6c;border-radius:0 0 11px 11px;}
+    footer span {font-weight:700;color:#2455b8;}
+  </style>
+</head>
+<body>
+<header>
+  <h1>Admin Panel</h1>
+  <p>Election Management &amp; Configuration</p>
+</header>
+<nav class="topnav">
+  <a href="dashboard.html">Dashboard</a>
+  <a href="admin_panel.html" class="active">Admin Panel</a>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+</nav>
+<div class="container">
+  <aside class="sidebar" id="sidePanel">
+    <button class="sidebar-toggle" id="sidebarToggle" title="Hide/Show Panel">
+      <svg viewBox="0 0 24 24"><path fill="#2d70e7" d="M9 6l6 6-6 6"/></svg>
+    </button>
+    <button class="side-tab active" data-tab="institution"><svg viewBox="0 0 20 20"><path fill="#2363b1" d="M10,1 L1,7 L1,19 L7,19 L7,13 L13,13 L13,19 L19,19 L19,7 Z"/></svg><span class="tab-label">Institution</span></button>
+    <button class="side-tab" data-tab="usergen"><svg viewBox="0 0 20 20"><circle fill="#2363b1" cx="10" cy="7" r="4"/><rect fill="#2363b1" x="3" y="14" width="14" height="5" rx="2"/></svg><span class="tab-label">User & Password</span></button>
+    <button class="side-tab" data-tab="theme"><svg viewBox="0 0 20 20"><circle fill="#43b5e7" cx="10" cy="10" r="8"/><rect fill="#50e3c2" x="2" y="2" width="16" height="8" rx="4"/></svg><span class="tab-label">Themes</span></button>
+    <button class="side-tab" data-tab="election"><svg viewBox="0 0 20 20"><rect fill="#e1a441" x="4" y="2" width="12" height="16" rx="3"/><rect fill="#fff" x="7" y="6" width="6" height="2" rx="1"/><rect fill="#fff" x="7" y="10" width="6" height="2" rx="1"/></svg><span class="tab-label">Elections</span></button>
+    <button class="side-tab" data-tab="candidate"><svg viewBox="0 0 20 20"><circle fill="#41b883" cx="10" cy="7" r="4"/><path fill="#41b883" d="M3 16c0-3 5-4 7-4s7 1 7 4v3H3z"/></svg><span class="tab-label">Candidates</span></button>
+    <button class="side-tab" data-tab="voter"><svg viewBox="0 0 20 20"><circle fill="#4a90e2" cx="10" cy="6" r="4"/><rect fill="#4a90e2" x="3" y="12" width="14" height="6" rx="2"/></svg><span class="tab-label">Voters</span></button>
+    <button class="side-tab" data-tab="backup"><svg viewBox="0 0 20 20"><path fill="#a86ad7" d="M7 14v-4h6v4h4v-8L10 2 3 6v8"/><rect fill="#a86ad7" x="6" y="11" width="8" height="7"/></svg><span class="tab-label">Backup</span></button>
+  </aside>
+  <div class="maincontent">
+    <section class="section active" id="tab-institution">
+      <div class="section-title">Institution Settings</div>
+      <form id="instForm" onsubmit="return false;">
+        <div class="input-row">
+          <label for="instName">Name:</label>
+          <input type="text" id="instName" placeholder="Institution Name">
+          <label for="instAddr">Address:</label>
+          <input type="text" id="instAddr" placeholder="Address">
+        </div>
+        <div class="input-row">
+          <label for="instFontSize">Font Size:</label>
+          <input type="number" id="instFontSize" min="10" max="40" value="28">
+          <label for="instFontColor">Font Color:</label>
+          <input type="color" id="instFontColor" value="#2d70e7">
+          <label for="instLogo">Logo:</label>
+          <input type="file" id="instLogo" accept="image/*">
+          <img id="instLogoPrev" class="logo-preview" src="" alt="Preview" style="display:none;">
+        </div>
+        <div class="input-row">
+          <button class="add-btn" onclick="saveInstSettings()">Save</button>
+          <button class="reset-btn" onclick="resetInstSettings()">Reset</button>
+        </div>
+      </form>
+      <div id="instSummary"></div>
+    </section>
+    <section class="section" id="tab-usergen">
+      <div class="section-title">Institution User &amp; Password Generator</div>
+      <div class="input-row">
+        <label for="instShortName">Short Name:</label>
+        <input type="text" id="instShortName" placeholder="Short e.g. 'ABC'">
+        <label for="genUserId">User ID:</label>
+        <input type="text" id="genUserId" readonly>
+        <label for="genPass">Password:</label>
+        <input type="text" id="genPass" readonly>
+        <button class="add-btn" onclick="generateUserPass()">Generate</button>
+        <button class="reset-btn" onclick="resetUserPass()">Reset</button>
+      </div>
+    </section>
+    <section class="section" id="tab-theme">
+      <div class="section-title">Themes &amp; Branding</div>
+      <div class="input-row">
+        <label for="themeType">Background Type:</label>
+        <select id="themeType" onchange="changeThemeType()">
+          <option value="gradient">Gradient</option>
+          <option value="image">Image</option>
+        </select>
+        <label for="themeColor1">Start:</label>
+        <input type="color" id="themeColor1" value="#4a90e2">
+        <label for="themeColor2">End:</label>
+        <input type="color" id="themeColor2" value="#50e3c2">
+        <label for="themeImageFile" id="imgLabel" style="display:none;">Image:</label>
+        <input type="file" id="themeImageFile" accept="image/*" style="display:none;">
+        <img id="themeImagePrev" class="logo-preview" src="" alt="Preview" style="display:none;">
+      </div>
+      <div class="input-row">
+        <label for="navColor">Navbar:</label>
+        <input type="color" id="navColor" value="#2d70e7">
+        <label for="sideColor">Sidebar:</label>
+        <input type="color" id="sideColor" value="#232a40">
+        <button class="add-btn" onclick="saveTheme()">Save</button>
+        <button class="reset-btn" onclick="resetTheme()">Reset</button>
+      </div>
+    </section>
+    <section class="section" id="tab-election">
+      <div class="section-title">Election Management</div>
+      <div class="input-row">
+        <input type="text" id="electionName" placeholder="Election Name">
+        <input type="date" id="electionDate">
+        <button class="add-btn" onclick="addElection()">Add Election</button>
+        <button class="reset-btn" onclick="resetElections()">Reset</button>
+      </div>
+      <table id="electionTable"><tr><th>ID</th><th>Name</th><th>Date</th><th>Status</th><th>Action</th></tr></table>
+    </section>
+    <section class="section" id="tab-candidate">
+      <div class="section-title">Candidate Management</div>
+      <div class="input-row">
+        <select id="candElectionId"></select>
+        <input type="text" id="candidateName" placeholder="Candidate Name">
+        <input type="text" id="partyName" placeholder="Party/Group">
+        <button class="add-btn" onclick="addCandidate()">Add Candidate</button>
+        <button class="reset-btn" onclick="resetCandidates()">Reset</button>
+      </div>
+      <table id="candidateTable"><tr><th>Election</th><th>Name</th><th>Party</th><th>Action</th></tr></table>
+    </section>
+    <section class="section" id="tab-voter">
+      <div class="section-title">Voter List Management</div>
+      <div class="input-row">
+        <input type="text" id="voterName" placeholder="Voter Name">
+        <input type="text" id="voterId" placeholder="Voter ID">
+        <button class="add-btn" onclick="addVoter()">Add Voter</button>
+        <button class="reset-btn" onclick="resetVoters()">Reset</button>
+      </div>
+      <table id="voterTable"><tr><th>Voter ID</th><th>Name</th><th>Status</th><th>Action</th></tr></table>
+    </section>
+    <section class="section" id="tab-backup">
+      <div class="section-title">Backup & Restore</div>
+      <div class="info-box">Back up all your portal data to a file or restore from a previous backup.</div>
+      <div class="input-row">
+        <button class="add-btn" onclick="backupData()">Backup & Save</button>
+        <input type="file" id="restoreFile" accept=".json" style="margin-left:18px;">
+        <button class="add-btn" onclick="restoreData()">Restore</button>
+      </div>
+      <div id="backupStatus"></div>
+    </section>
+  </div>
+</div>
+<footer>
+  <span>Admin Notice:</span> Make sure to regularly backup your data. All actions here affect official election records.
+</footer>
+<script>
+// Auth
+if(sessionStorage.getItem('userRole')!=='admin'){alert('Admin access only!');window.location.href='login.html';}
+function logout(){sessionStorage.clear();window.location.href="index.html";}
+// Sidebar tab navigation
+document.querySelectorAll('.side-tab').forEach(function(tab){
+  tab.onclick = function(){
+    document.querySelectorAll('.side-tab').forEach(t=>t.classList.remove('active'));
+    tab.classList.add('active');
+    let name = tab.getAttribute('data-tab');
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.getElementById('tab-'+name).classList.add('active');
+  };
+});
+// Sidebar toggle
+let collapsed = false;
+document.getElementById('sidebarToggle').onclick = function(){
+  collapsed = !collapsed;
+  let sp=document.getElementById('sidePanel');
+  sp.classList.toggle('collapsed', collapsed);
+  this.innerHTML = collapsed ?
+    `<svg viewBox="0 0 24 24"><path fill="#2d70e7" d="M15 6l-6 6 6 6"/></svg>` :
+    `<svg viewBox="0 0 24 24"><path fill="#2d70e7" d="M9 6l6 6-6 6"/></svg>`;
+};
+// Institution Settings
+function saveInstSettings() {
+  var name = document.getElementById('instName').value;
+  var addr = document.getElementById('instAddr').value;
+  var fontSize = document.getElementById('instFontSize').value;
+  var fontColor = document.getElementById('instFontColor').value;
+  var logo = localStorage.getItem('instLogo') || '';
+  var data = {name, addr, fontSize, fontColor, logo};
+  localStorage.setItem('instSettings', JSON.stringify(data));
+  showInstSummary();
+  alert("Saved!");
+}
+function resetInstSettings() {
+  localStorage.removeItem('instSettings');
+  localStorage.removeItem('instLogo');
+  document.getElementById('instForm').reset();
+  document.getElementById('instLogoPrev').style.display='none';
+  showInstSummary();
+  alert("Reset to default!");
+}
+function loadInstSettings() {
+  var data = {};
+  try { data = JSON.parse(localStorage.getItem('instSettings')) || {}; } catch(e){}
+  document.getElementById('instName').value = data.name || '';
+  document.getElementById('instAddr').value = data.addr || '';
+  document.getElementById('instFontSize').value = data.fontSize || '28';
+  document.getElementById('instFontColor').value = data.fontColor || '#2d70e7';
+  if(data.logo){
+    document.getElementById('instLogoPrev').src=data.logo;
+    document.getElementById('instLogoPrev').style.display='inline';
+  } else {
+    document.getElementById('instLogoPrev').style.display='none';
+  }
+  showInstSummary();
+}
+function showInstSummary() {
+  var data = {};
+  try { data = JSON.parse(localStorage.getItem('instSettings')) || {}; } catch(e){}
+  document.getElementById('instSummary').innerHTML =
+    "<b>Name:</b> "+(data.name||"-")+" | <b>Address:</b> "+(data.addr||"-")+
+    " | <b>Font:</b> "+(data.fontSize||"-")+" px "+(data.fontColor||"")+(data.logo?(" <img class='logo-preview' src='"+data.logo+"' style='max-width:62px;'>"):"");
+}
+document.getElementById('instLogo').onchange = function(e){
+  var file = this.files[0];
+  if(!file || !file.type.startsWith('image')) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    localStorage.setItem('instLogo',e.target.result);
+    document.getElementById('instLogoPrev').src = e.target.result;
+    document.getElementById('instLogoPrev').style.display = 'inline';
+  }; reader.readAsDataURL(file);
+};
+// User/Password generator
+function generateUserPass(){
+  var short = document.getElementById('instShortName').value.trim().toUpperCase();
+  if(!short){ alert("Set institution short name!"); return; }
+  var id = short + '_' + Math.floor(1000+Math.random()*9000);
+  var pass = Math.random().toString(36).slice(-8);
+  document.getElementById('genUserId').value=id;
+  document.getElementById('genPass').value=pass;
+}
+function resetUserPass(){
+  document.getElementById('instShortName').value = '';
+  document.getElementById('genUserId').value = '';
+  document.getElementById('genPass').value = '';
+}
+// Theme logic
+function saveTheme(){
+  var type = document.getElementById('themeType').value;
+  var color1 = document.getElementById('themeColor1').value;
+  var color2 = document.getElementById('themeColor2').value;
+  var nav = document.getElementById('navColor').value;
+  var side = document.getElementById('sideColor').value;
+  var img = '';
+  if(type==='image'){
+    img = localStorage.getItem('themeImage') || '';
+  }
+  var theme = {type,color1,color2,nav,side,img};
+  localStorage.setItem('themeSettings',JSON.stringify(theme));
+  applyTheme(theme);
+  alert("Theme saved!");
+}
+function resetTheme(){
+  localStorage.removeItem('themeSettings');
+  document.getElementById('themeType').value='gradient';
+  document.getElementById('themeColor1').value='#4a90e2';
+  document.getElementById('themeColor2').value='#50e3c2';
+  document.getElementById('navColor').value='#2d70e7';
+  document.getElementById('sideColor').value='#232a40';
+  document.getElementById('themeImagePrev').style.display='none';
+  applyTheme({});
+  alert("Reset!");
+}
+function loadTheme(){
+  var theme = {};
+  try {theme=JSON.parse(localStorage.getItem('themeSettings'))||{};}catch(e){}
+  document.getElementById('themeType').value = theme.type || 'gradient';
+  document.getElementById('themeColor1').value = theme.color1 || '#4a90e2';
+  document.getElementById('themeColor2').value = theme.color2 || '#50e3c2';
+  document.getElementById('navColor').value = theme.nav || '#2d70e7';
+  document.getElementById('sideColor').value = theme.side || '#232a40';
+  if(theme.img){ document.getElementById('themeImagePrev').src=theme.img; document.getElementById('themeImagePrev').style.display='inline'; }
+  else { document.getElementById('themeImagePrev').style.display='none'; }
+  applyTheme(theme);
+  changeThemeType();
+}
+function changeThemeType(){
+  var isImg = document.getElementById('themeType').value==='image';
+  document.getElementById('imgLabel').style.display = isImg?'inline':'none';
+  document.getElementById('themeImageFile').style.display = isImg?'inline':'none';
+  document.getElementById('themeImagePrev').style.display = isImg&&localStorage.getItem('themeImage')?'inline':'none';
+}
+document.getElementById('themeImageFile').onchange = function(e){
+  var file = this.files[0];
+  if(!file || !file.type.startsWith('image')) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    localStorage.setItem('themeImage',e.target.result);
+    document.getElementById('themeImagePrev').src = e.target.result;
+    document.getElementById('themeImagePrev').style.display = 'inline';
+  }; reader.readAsDataURL(file);
+};
+function applyTheme(theme){
+  if(theme.type==='image' && theme.img){
+    document.body.style.backgroundImage = 'url('+theme.img+')';
+    document.body.style.backgroundSize = 'cover';
+  } else {
+    document.body.style.background = 'linear-gradient(120deg,'+(theme.color1||'#e5f1ff')+','+(theme.color2||'#f0fff4')+')';
+  }
+  document.querySelector('nav').style.background = theme.nav || '#f2f7fd';
+  document.getElementById('sidePanel').style.background = theme.side || '#f3fafd';
+}
+// ELECTIONS
+function getElections(){try{return JSON.parse(localStorage.getItem('elections'))||[];}catch(e){return [];}}
+function saveElections(arr){localStorage.setItem('elections',JSON.stringify(arr));}
+function addElection(){var name=document.getElementById('electionName').value.trim();var date=document.getElementById('electionDate').value;if(!name||!date)return alert('Complete election fields!');
+var arr=getElections();var id='E'+(arr.length?arr[arr.length-1].id.slice(1)*1+1:1001);arr.push({id:id,name,date,status:'Active'});saveElections(arr); listElections();
+document.getElementById('electionName').value=''; document.getElementById('electionDate').value='';}
+function delElection(idx){var arr=getElections(); arr.splice(idx,1); saveElections(arr); listElections();}
+function resetElections(){localStorage.removeItem('elections');listElections();}
+function listElections(){
+  var arr=getElections(),tb=document.getElementById('electionTable');
+  tb.innerHTML='<tr><th>ID</th><th>Name</th><th>Date</th><th>Status</th><th>Action</th></tr>';
+  arr.forEach(function(e,i){
+    tb.innerHTML+=`<tr>
+    <td>${e.id}</td><td>${e.name}</td><td>${e.date}</td>
+    <td>${e.status}</td>
+    <td class="actions">
+      <button class="edit-btn" onclick="editElection(${i})">Edit</button>
+      <button class="delete-btn" onclick="delElection(${i})">Delete</button>
+    </td></tr>`;
+  });
+  var sel=document.getElementById("candElectionId");
+  sel.innerHTML='';
+  arr.forEach(function(e){sel.innerHTML+=`<option value="${e.id}">${e.name}</option>`;});
+}
+function editElection(idx){var arr=getElections(),e=arr[idx];
+document.getElementById('electionName').value=e.name;document.getElementById('electionDate').value=e.date;delElection(idx);}
+
+// CANDIDATES
+function getCandidates(){try{return JSON.parse(localStorage.getItem('candidates'))||[];}catch(e){return [];} }
+function saveCandidates(arr){localStorage.setItem('candidates',JSON.stringify(arr));}
+function addCandidate(){
+  var eid=document.getElementById('candElectionId').value;
+  var name=document.getElementById('candidateName').value.trim();
+  var party=document.getElementById('partyName').value.trim();
+  if(!eid||!name||!party)return alert('Complete candidate fields!');
+  var arr=getCandidates();
+  arr.push({eid,name,party});
+  saveCandidates(arr); listCandidates();
+  document.getElementById('candidateName').value=''; document.getElementById('partyName').value='';
+}
+function delCandidate(idx){var arr=getCandidates(); arr.splice(idx,1); saveCandidates(arr); listCandidates();}
+function resetCandidates(){localStorage.removeItem('candidates');listCandidates();}
+function listCandidates(){
+  var arr=getCandidates(),tb=document.getElementById('candidateTable');
+  var elections=getElections();
+  tb.innerHTML='<tr><th>Election</th><th>Name</th><th>Party</th><th>Action</th></tr>';
+  arr.forEach(function(c,i){
+    var ename = (elections.find(e=>e.id==c.eid)||{}).name||c.eid;
+    tb.innerHTML+=`<tr>
+    <td>${ename}</td>
+    <td>${c.name}</td>
+    <td>${c.party}</td>
+    <td class="actions">
+      <button class="edit-btn" onclick="editCandidate(${i})">Edit</button>
+      <button class="delete-btn" onclick="delCandidate(${i})">Delete</button>
+    </td></tr>`;
+  });
+}
+function editCandidate(idx){
+  var arr=getCandidates(),c=arr[idx];
+  document.getElementById('candElectionId').value=c.eid;
+  document.getElementById('candidateName').value=c.name;
+  document.getElementById('partyName').value=c.party;
+  delCandidate(idx);
+}
+// VOTERS
+function getVoters(){try{return JSON.parse(localStorage.getItem('voters'))||[];}catch(e){return [];} }
+function saveVoters(arr){localStorage.setItem('voters',JSON.stringify(arr));}
+function addVoter(){
+  var name=document.getElementById('voterName').value.trim();
+  var id=document.getElementById('voterId').value.trim();
+  if(!name||!id)return alert('Complete voter fields!');
+  var arr=getVoters();
+  arr.push({id,name,status:'Active'});
+  saveVoters(arr); listVoters();
+  document.getElementById('voterName').value=''; document.getElementById('voterId').value='';
+}
+function delVoter(idx){var arr=getVoters(); arr.splice(idx,1); saveVoters(arr); listVoters();}
+function resetVoters(){localStorage.removeItem('voters');listVoters();}
+function listVoters(){
+  var arr=getVoters(),tb=document.getElementById('voterTable');
+  tb.innerHTML='<tr><th>Voter ID</th><th>Name</th><th>Status</th><th>Action</th></tr>';
+  arr.forEach(function(v,i){
+    tb.innerHTML+=`<tr>
+    <td>${v.id}</td>
+    <td>${v.name}</td>
+    <td>${v.status}</td>
+    <td class="actions">
+      <button class="delete-btn" onclick="delVoter(${i})">Remove</button>
+    </td></tr>`;
+  });
+}
+// Backup & Restore
+function backupData() {
+  const data = {
+    institution: localStorage.getItem('instSettings'),
+    theme: localStorage.getItem('themeSettings'),
+    elections: localStorage.getItem('elections'),
+    candidates: localStorage.getItem('candidates'),
+    voters: localStorage.getItem('voters')
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const link = Object.assign(document.createElement('a'), {
+    href: url, download: 'voting_portal_backup.json'
+  });
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  document.getElementById('backupStatus').textContent = "Backup saved as 'voting_portal_backup.json'.";
+}
+function restoreData() {
+  const fileInput = document.getElementById('restoreFile');
+  if(!fileInput.files.length) {
+    document.getElementById('backupStatus').textContent = "Please select a backup file first.";
+    return;
+  }
+  const file = fileInput.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try {
+      const data = JSON.parse(e.target.result);
+      if(data.institution) localStorage.setItem('instSettings', data.institution);
+      if(data.theme) localStorage.setItem('themeSettings', data.theme);
+      if(data.elections) localStorage.setItem('elections', data.elections);
+      if(data.candidates) localStorage.setItem('candidates', data.candidates);
+      if(data.voters) localStorage.setItem('voters', data.voters);
+      document.getElementById('backupStatus').textContent = "Backup restored!";
+      setTimeout(()=>window.location.reload(), 1200);
+    } catch(err){
+      document.getElementById('backupStatus').textContent = "Error: Invalid backup file!";
+    }
+  };
+  reader.readAsText(file);
+}
+document.addEventListener('DOMContentLoaded',function(){
+  loadInstSettings(); loadTheme(); listElections(); listCandidates(); listVoters();
+});
+</script>
+</body>
+</html>
